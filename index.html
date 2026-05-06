@@ -3,97 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disiplin Takip Sistemi</title>
-    <!-- PDF ve Görsel Kütüphaneler -->
+    <title>Disiplin Pro | Aylık Rapor Modülü</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f8fafc; --info: #3b82f6; --gold: #fde047; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 10px; margin: 0; user-select: none; -webkit-user-select: none; }
+        :root {
+            --bg: #0f172a; --card: #1e293b; --accent: #22c55e; --text: #f8fafc;
+            --danger: #ef4444; --info: #3b82f6; --label: #94a3b8; --gold: #fde047;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 10px; margin: 0; padding-bottom: 80px; }
         .container { max-width: 500px; margin: auto; }
-        .box { background: var(--card); padding: 20px; margin: 15px 0; border-radius: 15px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        h3 { margin-top: 0; font-size: 1.1em; color: var(--gold); border-bottom: 1px solid #334155; padding-bottom: 8px; }
-        input, select { padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: white; width: 100%; box-sizing: border-box; margin-bottom: 10px; outline: none; }
-        .main-btn { padding: 14px; border: none; border-radius: 10px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
-        .main-btn:active { transform: scale(0.95); }
+        .box { background: var(--card); padding: 20px; margin: 15px 0; border-radius: 15px; border: 1px solid #334155; }
+        
+        .user-selector { border-top: 4px solid var(--gold); }
+        input, select { padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: white; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        
+        .main-btn { padding: 14px; border: none; border-radius: 10px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
+        
         .task-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .task { background: #334155; padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.8em; border: 1px solid transparent; transition: 0.3s; }
-        .done { background: #16a34a !important; border-color: var(--accent); font-weight: bold; }
-        .stat-box { background: #0f172a; padding: 10px; border-radius: 8px; margin-top: 5px; font-size: 0.85em; border-left: 3px solid var(--info); display: flex; justify-content: space-between; }
-        .label-small { font-size: 0.7em; color: #94a3b8; display: block; margin-bottom: 4px; }
+        .task { background: #334155; padding: 15px; border-radius: 12px; cursor: pointer; position: relative; text-align: center; font-size: 0.85em; }
+        .done { background: #16a34a !important; border-color: var(--accent); }
+        .btn-delete { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 10px; }
+        
+        .period-title { color: var(--gold); font-size: 0.75em; font-weight: bold; display: block; margin-top: 10px; text-transform: uppercase; }
+        .stat-box { background: #0f172a; padding: 10px; border-radius: 8px; margin-top: 5px; font-size: 0.85em; border-left: 3px solid var(--info); }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
 <div class="container">
-    <div style="text-align:center; padding: 10px;">
-        <h2 style="margin:0; color:var(--gold);">🚀 DİSİPLİN TAKİP</h2>
-        <small style="color:#94a3b8;">Verileriniz sisteme'e iletilir.</small>
+    <!-- KULLANICI YÖNETİMİ -->
+    <div class="box user-selector">
+        <h3 style="margin-top:0; color:var(--gold)">👤 Kullanıcı Yönetimi</h3>
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <input type="text" id="newUserName" placeholder="Yeni Kişi..." style="margin-bottom:0">
+            <button onclick="createUser()" style="background:var(--accent); border:none; border-radius:10px; color:white; padding:0 15px; cursor:pointer;">+</button>
+        </div>
+        <select id="userDropdown" onchange="switchUser()"></select>
     </div>
 
-    <!-- KİŞİ SEÇİMİ -->
-    <div class="box">
-        <h3>👤 Kişi Bilgisi</h3>
-        <label class="label-small">Yeni Kişi Ekle (Ad Soyad):</label>
-        <div style="display:flex; gap:5px;">
-            <input type="text" id="newUserName" placeholder="Örn: Ahmet Yılmaz" style="margin-bottom:0">
-            <button onclick="createUser()" style="background:var(--accent); border:none; border-radius:10px; color:white; padding:0 20px; cursor:pointer; font-weight:bold;">+</button>
-        </div>
-        <label class="label-small" style="margin-top:10px;">Takip Edilen Kişi:</label>
-        <select id="userDropdown" onchange="switchUser()"></select>
+    <!-- TARİH VE PDF -->
+    <div class="box" style="border-left: 5px solid var(--info);">
+        <h3 style="margin:0; color:var(--info); font-size: 1em;">📅 Raporlama</h3>
+        <input type="date" id="dateFilter" onchange="loadUserDayData()" style="margin-top:10px;">
+        <button class="main-btn" style="background:var(--info)" onclick="exportPDF()">📄 Detaylı Aylık PDF Raporu</button>
     </div>
 
     <!-- VERİ GİRİŞİ -->
     <div class="box">
-        <h3 id="entryTitle">📊 Günlük Veriler</h3>
-        <input type="date" id="dateFilter" onchange="loadUserDayData()">
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
-            <div><label class="label-small">Su (L)</label><input type="number" id="in_water" step="0.1" placeholder="0.0"></div>
-            <div><label class="label-small">Spor (Dk)</label><input type="number" id="in_sport" placeholder="0"></div>
-            <div><label class="label-small">Kilo (Kg)</label><input type="number" id="in_weight" step="0.1" placeholder="0.0"></div>
-        </div>
-        <button class="main-btn" onclick="saveData()">💾 VERİLERİ KAYDET</button>
+        <h3 id="entryTitle" style="margin-top:0">📊 Veri Girişi</h3>
+        <label style="font-size:0.75em">Su (Litre)</label><input type="number" id="in_water" step="0.1">
+        <label style="font-size:0.75em">Spor (Dakika)</label><input type="number" id="in_sport">
+        <label style="font-size:0.75em">Kilo (kg)</label><input type="number" id="in_weight" step="0.1">
+        <button class="main-btn" onclick="saveData()">💾 Kaydet</button>
     </div>
 
-    <!-- GÖREVLER -->
+    <!-- HEDEFLER -->
     <div class="box">
-        <h3>✨ Günlük Hedefler</h3>
+        <h3>✨ Kişisel Hedefler</h3>
         <div style="display:flex; gap:5px;">
             <input type="text" id="taskInput" placeholder="Yeni hedef..." style="margin-bottom:0">
-            <button onclick="addTask()" style="background:var(--info); border:none; border-radius:10px; color:white; padding:0 15px; cursor:pointer;">EKLE</button>
+            <button onclick="addTask()" style="background:var(--info); border:none; border-radius:10px; color:white; padding:0 15px; cursor:pointer;">+</button>
         </div>
         <div class="task-grid" id="taskList"></div>
     </div>
 
-    <!-- ANALİZ -->
+    <!-- İSTATİSTİKLER -->
     <div class="box">
-        <h3>📈 İstatistikler (Aylık & Haftalık)</h3>
+        <h3 id="statsTitle">📈 Analiz Paneli</h3>
         <div id="stats_area"></div>
-        <button class="main-btn" style="background:var(--info); margin-top:15px;" onclick="exportPDF()">📄 DETAYLI PDF RAPORU AL</button>
     </div>
+
+    <button onclick="clearAllData()" style="background:none; border:none; color:var(--danger); font-size:0.7em; cursor:pointer; width:100%;">Tüm Verileri Sıfırla</button>
 </div>
 
 <script>
-    // SİZİN TELEGRAM BİLGİLERİNİZ
-    const TG_TOKEN = "8773355113:AAG7lOMGY2pXwG1_2KC_3t9OpkjQXvm9rr4";
-    const CHAT_ID = "894091838";
-
+    const { jsPDF } = window.jspdf;
     let multiDB = JSON.parse(localStorage.getItem("multi_disiplin_db") || "{}");
     let currentUser = localStorage.getItem("last_user") || "";
 
     function getToday() { return new Date().toISOString().split("T")[0]; }
 
-    async function sendTelegram(text) {
-        const url = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}&parse_mode=Markdown`;
-        try { await fetch(url); } catch(e) { console.error("TG Hatası"); }
-    }
-
     function createUser() {
         const name = document.getElementById("newUserName").value.trim();
         if(name && !multiDB[name]) {
-            multiDB[name] = { db: {}, tasks: ["Su İç", "Kitap", "Spor"], score: 0 };
-            saveStorage(); updateDropdown();
+            multiDB[name] = { db: {}, tasks: ["Su İç", "Kitap Oku", "Spor Yap"], score: 0 };
+            saveToStorage(); updateDropdown();
             document.getElementById("userDropdown").value = name;
             switchUser();
             document.getElementById("newUserName").value = "";
@@ -108,26 +104,28 @@
     function switchUser() {
         currentUser = document.getElementById("userDropdown").value;
         localStorage.setItem("last_user", currentUser);
-        document.getElementById("entryTitle").innerText = `📊 ${currentUser} Kaydı`;
-        loadUserDayData(); updateStats();
+        document.getElementById("entryTitle").innerText = `📊 ${currentUser} Verileri`;
+        loadUserDayData();
+        updateStats();
     }
 
     function saveData() {
-        if(!currentUser) return alert("Lütfen önce bir kişi seçin!");
+        if(!currentUser) return alert("Lütfen bir kullanıcı seçin!");
         const d = document.getElementById("dateFilter").value || getToday();
-        const user = multiDB[currentUser];
-        if(!user.db[d]) user.db[d] = { tasks: [] };
+        const userObj = multiDB[currentUser];
+        if(!userObj.db[d]) userObj.db[d] = { tasks: [] };
         
-        user.db[d].water = document.getElementById("in_water").value || 0;
-        user.db[d].sport = document.getElementById("in_sport").value || 0;
-        user.db[d].weight = document.getElementById("in_weight").value || 0;
+        userObj.db[d].water = document.getElementById("in_water").value || 0;
+        userObj.db[d].sport = document.getElementById("in_sport").value || 0;
+        userObj.db[d].weight = document.getElementById("in_weight").value || 0;
         
-        saveStorage(); updateStats();
-
-        // Telegrama gönderilen isim-soyisimli mesaj
-        const msg = `🔔 *DİSİPLİN BİLDİRİMİ*\n━━━━━━━━━━━━\n👤 *Kişi:* ${currentUser}\n📅 *Tarih:* ${d}\n💧 *Su:* ${user.db[d].water} L\n🏃 *Spor:* ${user.db[d].sport} dk\n⚖️ *Kilo:* ${user.db[d].weight} kg\n✅ *Görevler:* ${user.db[d].tasks.length} Adet`;
-        sendTelegram(msg);
-        alert("Başarılı! Verileriniz M_GUL'e iletildi.");
+        saveToStorage(); 
+        updateStats(); 
+        
+        // --- TELEGRAM BİLDİRİM TETİKLEME ---
+        prepareTelegramMessage(userObj, d);
+        
+        alert("Kaydedildi !");
     }
 
     function loadUserDayData() {
@@ -142,106 +140,159 @@
 
     function updateStats() {
         if(!currentUser) return;
-        const user = multiDB[currentUser];
+        const userObj = multiDB[currentUser];
         const today = new Date();
         const calc = (days) => {
             let w=0, s=0, c=0;
-            Object.keys(user.db).forEach(date => {
-                if((today - new Date(date)) / 86400000 <= days) {
-                    w += parseFloat(user.db[date].water || 0);
-                    s += parseInt(user.db[date].sport || 0);
-                    c++;
-                }
+            Object.keys(userObj.db).forEach(date => {
+                const diff = (today - new Date(date)) / 86400000;
+                if(diff <= days) { w += parseFloat(userObj.db[date].water || 0); s += parseInt(userObj.db[date].sport || 0); c++; }
             });
-            return c > 0 ? `<span>Su: ${(w/c).toFixed(1)}L</span> <span>Spor: ${(s/c).toFixed(0)}dk</span>` : "Veri yok";
+            return c > 0 ? `Orta. Su: ${(w/c).toFixed(1)}L | Orta. Spor: ${(s/c).toFixed(0)}dk` : "Veri henüz yok";
         };
+
         document.getElementById("stats_area").innerHTML = `
-            <label class="label-small">7 GÜNLÜK ORTALAMA</label>
+            <span class="period-title">Haftalık Performans (7 Gün)</span>
             <div class="stat-box">${calc(7)}</div>
-            <label class="label-small" style="margin-top:10px;">30 GÜNLÜK ORTALAMA</label>
+            <span class="period-title">Aylık Performans (30 Gün)</span>
             <div class="stat-box">${calc(30)}</div>
+            <span class="period-title">Disiplin Skoru</span>
+            <div style="font-weight:bold; color:var(--accent); margin-top:5px;">${userObj.score} Puan</div>
         `;
+    }
+
+    function exportPDF() {
+        if(!currentUser) return;
+        const doc = new jsPDF();
+        const d = document.getElementById("dateFilter").value || getToday();
+        const userObj = multiDB[currentUser];
+        const selectedMonth = d.substring(0, 7);
+
+        doc.setFontSize(20); doc.setTextColor(34, 197, 94);
+        doc.text("Disiplin Pro - Performans Raporu", 10, 15);
+        
+        doc.setFontSize(11); doc.setTextColor(0);
+        doc.text(`Kullanici: ${currentUser}`, 10, 25);
+        doc.text(`Rapor Tarihi: ${d}`, 10, 31);
+
+        const dayData = userObj.db[d] || {water:0, sport:0, weight:0, tasks:[]};
+        doc.setFontSize(14); doc.text("Gunluk Ozet", 10, 42);
+        doc.autoTable({
+            startY: 45,
+            head: [['Kategori', 'Deger']],
+            body: [
+                ["Su", dayData.water + " L"], ["Spor", dayData.sport + " dk"],
+                ["Kilo", dayData.weight + " kg"], ["Hedefler", dayData.tasks.join(", ")]
+            ]
+        });
+
+        doc.setFontSize(14); doc.text(`${selectedMonth} Ayi Detayli Dokumu`, 10, doc.lastAutoTable.finalY + 15);
+        
+        const monthlyRows = [];
+        Object.keys(userObj.db).sort().forEach(date => {
+            if(date.startsWith(selectedMonth)) {
+                const row = userObj.db[date];
+                monthlyRows.push([date, row.water + " L", row.sport + " dk", row.weight + " kg", row.tasks.length]);
+            }
+        });
+
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 20,
+            head: [['Tarih', 'Su', 'Spor', 'Kilo', 'Biten Hedef']],
+            body: monthlyRows,
+            theme: 'striped'
+        });
+
+        doc.save(`${currentUser}_Aylik_Rapor_${selectedMonth}.pdf`);
     }
 
     function renderTasks() {
         const list = document.getElementById("taskList");
         const d = document.getElementById("dateFilter").value || getToday();
+        const userObj = multiDB[currentUser];
         list.innerHTML = "";
-        if(multiDB[currentUser]) {
-            multiDB[currentUser].tasks.forEach((t, i) => {
-                const done = multiDB[currentUser].db[d]?.tasks?.includes(t);
-                list.innerHTML += `<div class="task ${done ? 'done' : ''}" onclick="toggleTask('${t}')">${t}</div>`;
+        if(userObj) {
+            userObj.tasks.forEach((t, i) => {
+                const done = userObj.db[d]?.tasks?.includes(t);
+                list.innerHTML += `<div class="task ${done ? 'done' : ''}" onclick="toggleTask('${t}')">
+                    <button class="btn-delete" onclick="deleteTask(event, ${i})">×</button>${t}</div>`;
             });
         }
     }
 
     function toggleTask(t) {
         const d = document.getElementById("dateFilter").value || getToday();
-        const user = multiDB[currentUser];
-        if(!user.db[d]) user.db[d] = { tasks: [], water: 0, sport: 0, weight: 0 };
-        const idx = user.db[d].tasks.indexOf(t);
-        if(idx === -1) { 
-            user.db[d].tasks.push(t); 
-            if(user.db[d].tasks.length === user.tasks.length) confetti(); 
-        } else {
-            user.db[d].tasks.splice(idx, 1);
-        }
-        saveStorage(); renderTasks();
+        const userObj = multiDB[currentUser];
+        if(!userObj.db[d]) userObj.db[d] = { tasks: [], water: 0, sport: 0, weight: 0 };
+        const idx = userObj.db[d].tasks.indexOf(t);
+        if(idx === -1) { userObj.db[d].tasks.push(t); userObj.score += 10; if(userObj.db[d].tasks.length === userObj.tasks.length) confetti(); }
+        else { userObj.db[d].tasks.splice(idx, 1); userObj.score -= 10; }
+        saveToStorage(); renderTasks(); updateStats();
     }
 
-    function exportPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const d = document.getElementById("dateFilter").value || getToday();
-        const user = multiDB[currentUser];
-        const ay = d.substring(0,7);
-
-        doc.setFontSize(18);
-        doc.text(`Disiplin Raporu: ${currentUser}`, 10, 15);
-        doc.setFontSize(11);
-        doc.text(`Donem: ${ay} | Olusturma: ${d}`, 10, 22);
-
-        const rows = Object.keys(user.db)
-            .filter(date => date.startsWith(ay))
-            .sort()
-            .map(k => [k, user.db[k].water + " L", user.db[k].sport + " dk", user.db[k].weight + " kg", user.db[k].tasks.length]);
-        
-        doc.autoTable({
-            startY: 30,
-            head: [['Tarih', 'Su', 'Spor', 'Kilo', 'Gorev']],
-            body: rows,
-            theme: 'striped'
-        });
-
-        doc.save(`${currentUser}_Rapor_${ay}.pdf`);
-    }
-
-    function saveStorage() { localStorage.setItem("multi_disiplin_db", JSON.stringify(multiDB)); }
+    function saveToStorage() { localStorage.setItem("multi_disiplin_db", JSON.stringify(multiDB)); }
     function addTask() { 
-        const v = document.getElementById("taskInput").value.trim(); 
-        if(v && currentUser) { 
-            multiDB[currentUser].tasks.push(v); 
-            saveStorage(); renderTasks(); 
-            document.getElementById("taskInput").value=""; 
-        } 
+        const v = document.getElementById("taskInput").value.trim();
+        if(v && currentUser) { multiDB[currentUser].tasks.push(v); saveToStorage(); renderTasks(); document.getElementById("taskInput").value=""; }
     }
-    
+    function deleteTask(e, i) { e.stopPropagation(); multiDB[currentUser].tasks.splice(i, 1); saveToStorage(); renderTasks(); }
+    function clearAllData() { if(confirm("TÜM VERİLER SİLİNECEK! Emin misiniz?")) { localStorage.clear(); location.reload(); } }
+
     window.onload = () => {
         updateDropdown();
-        if(currentUser && multiDB[currentUser]) { 
-            document.getElementById("userDropdown").value = currentUser; 
-            switchUser(); 
-        } else if(Object.keys(multiDB).length > 0) {
-            document.getElementById("userDropdown").selectedIndex = 0;
-            switchUser();
-        }
+        if(currentUser && multiDB[currentUser]) { document.getElementById("userDropdown").value = currentUser; switchUser(); }
+        else if (Object.keys(multiDB).length > 0) { document.getElementById("userDropdown").selectedIndex = 0; switchUser(); }
         document.getElementById("dateFilter").value = getToday();
     };
 
-    // Güvenlik: Tuş engelleme
-    document.onkeydown = function(e) { 
-        if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false; 
+
+    // ================================================================
+    // --- TELEGRAM AYARLARI BURADAN BAŞLAR ---
+    // ================================================================
+
+    const TG_TOKEN = "8773355113:AAG7lOMGY2pXwG1_2KC_3t9OpkjQXvm9rr4";
+    const CHAT_ID = "894091838";
+
+    function prepareTelegramMessage(userObj, date) {
+        const data = userObj.db[date];
+        const message = `
+🚀 *DİSİPLİN RAPORU*
+━━━━━━━━━━━━━━
+👤 *Kişi:* ${currentUser}
+📅 *Tarih:* ${date}
+━━━━━━━━━━━━━━
+💧 *Su:* ${data.water} Litre
+🏃 *Spor:* ${data.sport} Dakika
+⚖️ *Kilo:* ${data.weight} kg
+✅ *Biten Hedef:* ${data.tasks.length} Adet
+━━━━━━━━━━━━━━
+🏆 *Toplam Puan:* ${userObj.score}
+        `;
+        
+        sendToTelegram(message);
     }
+
+    function sendToTelegram(text) {
+        const url = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`;
+        const params = {
+            chat_id: CHAT_ID,
+            text: text,
+            parse_mode: "Markdown"
+        };
+
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(params)
+        })
+        .then(response => console.log("Telegram Mesajı Gönderildi"))
+        .catch(error => console.error("Telegram Hatası:", error));
+    }
+
+    // ================================================================
+    // --- TELEGRAM AYARLARI BURADA BİTER ---
+    // ================================================================
+
 </script>
 </body>
 </html>
